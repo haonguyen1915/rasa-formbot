@@ -10,10 +10,10 @@ import rasa.utils.io
 import rasa.train
 from rasa.importers.importer import TrainingDataImporter
 from rasa.core.agent import Agent
-from rasa.core.policies.memoization import MemoizationPolicy
-from rasa.core.policies.mapping_policy import MappingPolicy
+from rasa.utils.endpoints import ClientResponseError, EndpointConfig
 from haolib import *
 from rasa.core.policies.ensemble import PolicyEnsemble
+from haolib.lib_rasa.evaluation import EvaluateModel
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +47,11 @@ async def train_core(domain_file="domain.yml", model_directory="models", model_n
     )
     domain = await file_importer.get_domain()
     config = await file_importer.get_config()
+    end_point = EndpointConfig("http://localhost:5055/webhook")
     agent = Agent(
         domain,
-        policies=PolicyEnsemble.from_dict(config)
+        policies=PolicyEnsemble.from_dict(config),
+        action_endpoint=end_point
     )
     # training_data_file = "data/tiny_stories.md"
     train_trackers = await agent.load_data(training_data_file)
@@ -73,18 +75,30 @@ async def parse(text: Text, model_path: Text):
 
 
 async def conversation_loop(model_path: Text):
-    agent = Agent.load(model_path)
+    end_point = EndpointConfig("http://localhost:5055/webhook")
+    agent = Agent.load(model_path, action_endpoint=end_point)
     print("Press 'q' to exit the conversation")
     while True:
         val = input("input: ")
         if val == "q":
             break
         response = await agent.handle_text(val)
-        print("Bot: {}".format(response[0]["text"]))
+        if isinstance(response, list) and len(response) > 0:
+            print("Bot: {}".format(response[0]["text"]))
+
+
+def evaluation_model():
+    evaluate_model = EvaluateModel("data/test_data.md", "models/current/nlu")
+    evaluate_model.evaluate_all()
+    evaluate_model.plot_confussion_matrix_intents()
+
+
 if __name__ == "__main__":
+    logging.basicConfig(filename="log_stream.txt", level=logging.DEBUG)
     loop = asyncio.get_event_loop()
 
     # train_nlu()
     # loop.run_until_complete(train_core())
     # loop.run_until_complete(parse("hello", "models/current"))
+    # evaluation_model()
     loop.run_until_complete(conversation_loop("models/current"))
