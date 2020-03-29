@@ -2,7 +2,11 @@ from typing import Dict, Text, Any, List, Union, Optional
 
 from rasa_sdk import Tracker
 from rasa_sdk.executor import CollectingDispatcher
-from rasa_sdk.forms import FormAction
+from rasa_sdk.forms import FormAction, Action
+import csv
+
+
+# from rasa_core_sdk import Action
 
 
 class RestaurantForm(FormAction):
@@ -74,11 +78,11 @@ class RestaurantForm(FormAction):
 
     # USED FOR DOCS: do not rename without updating in docs
     def validate_cuisine(
-        self,
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
+            self,
+            value: Text,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
         """Validate cuisine value."""
 
@@ -92,11 +96,11 @@ class RestaurantForm(FormAction):
             return {"cuisine": None}
 
     def validate_num_people(
-        self,
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
+            self,
+            value: Text,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
         """Validate num_people value."""
 
@@ -108,11 +112,11 @@ class RestaurantForm(FormAction):
             return {"num_people": None}
 
     def validate_outdoor_seating(
-        self,
-        value: Text,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
+            self,
+            value: Text,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
         """Validate outdoor_seating value."""
 
@@ -133,14 +137,67 @@ class RestaurantForm(FormAction):
             return {"outdoor_seating": value}
 
     def submit(
-        self,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
+            self,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any],
     ) -> List[Dict]:
         """Define what the form has to do
             after all required slots are filled"""
 
         # utter submit template
         dispatcher.utter_message(template="utter_submit")
+        return []
+
+
+class ActionDefaultAskAffirmation(Action):
+    """Asks for an affirmation of the intent if NLU threshold is not met."""
+
+    def name(self):
+        return "action_default_ask_affirmation"
+
+    def __init__(self):
+        self.intent_mappings = {}
+        # read the mapping from a csv and store it in a dictionary
+        # with open('intent_mapping.csv', newline='', encoding='utf-8') as file:
+        #     csv_reader = csv.reader(file)
+        #     for row in csv_reader:
+        #         self.intent_mappings[row[0]] = row[1]
+
+    def run(self, dispatcher, tracker, domain):
+        # get the most likely intent
+        last_intent_name = tracker.latest_message['intent']['name']
+
+        # get the prompt for the intent
+        # intent_prompt = self.intent_mappings[last_intent_name]
+        intent_prompt = last_intent_name
+
+        # Create the affirmation message and add two buttons to it.
+        # Use '/<intent_name>' as payload to directly trigger '<intent_name>'
+        # when the button is clicked.
+        message = "Did you mean '{}'?".format(intent_prompt)
+        buttons = [{'title': 'Yes',
+                    'payload': '/{}'.format(last_intent_name)},
+                   {'title': 'No',
+                    'payload': '/out_of_scope'}]
+        dispatcher.utter_message(message, buttons=buttons)
+
+        return []
+
+
+class ActionDefaultFallback(Action):
+    """Executes the fallback action and goes back to the previous state
+    of the dialogue"""
+
+    def name(self) -> Text:
+        print("helooooooooo")
+        return "action_default_fallback"
+
+    # def __init__(self) -> None:
+    #     super().__init__("utter_default", silent_fail=True)
+
+    def run(self, dispatcher, tracker, domain):
+        # dispatcher.utter_message(template="utter_submit")
+        text = "we decided to fall back"
+        dispatcher.utter_message(text=text)
         return []

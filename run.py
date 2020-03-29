@@ -14,7 +14,7 @@ from rasa.utils.endpoints import ClientResponseError, EndpointConfig
 from haolib import *
 from rasa.core.policies.ensemble import PolicyEnsemble
 from haolib.lib_rasa.evaluation import EvaluateModel
-
+from haolib.lib_cm.arg_parser import ArgParser
 logger = logging.getLogger(__name__)
 
 
@@ -93,12 +93,17 @@ def evaluation_model():
     evaluate_model.plot_confussion_matrix_intents()
 
 
+parser = ArgParser()
+parser.add_str("-m", "--mode", choices=["nlu", "core", "eval", "test"], default="test")
+args = parser.parse_args()
 if __name__ == "__main__":
     logging.basicConfig(filename="log_stream.txt", level=logging.DEBUG)
     loop = asyncio.get_event_loop()
-
-    # train_nlu()
-    # loop.run_until_complete(train_core())
-    # loop.run_until_complete(parse("hello", "models/current"))
-    # evaluation_model()
-    loop.run_until_complete(conversation_loop("models/current"))
+    if args.mode == "nlu":
+        train_nlu()
+    if args.mode == "core":
+        loop.run_until_complete(train_core())
+    if args.mode == "eval":
+        evaluation_model()
+    if args.mode == "test":
+        loop.run_until_complete(conversation_loop("models/current"))

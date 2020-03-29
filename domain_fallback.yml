@@ -80,4 +80,5 @@ responses:
 forms:
   - restaurant_form
 actions:
+  - action_default_fallback
   - action_default_ask_affirmation
