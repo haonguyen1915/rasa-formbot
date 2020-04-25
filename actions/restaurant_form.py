@@ -4,6 +4,7 @@ from rasa_sdk import Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.forms import FormAction, Action
 import csv
+from actions.utils.utility import *
 
 
 # from rasa_core_sdk import Action
@@ -90,9 +91,8 @@ class RestaurantForm(FormAction):
             # validation succeeded, set the value of the "cuisine" slot to value
             return {"cuisine": value}
         else:
-            dispatcher.utter_message(template="utter_wrong_cuisine")
-            # validation failed, set this slot to None, meaning the
-            # user will be asked for the slot again
+            # dispatcher.utter_message(template="utter_wrong_cuisine")
+            utter_wrong_cuisine(dispatcher, value)
             return {"cuisine": None}
 
     def validate_num_people(
@@ -107,8 +107,8 @@ class RestaurantForm(FormAction):
         if self.is_int(value) and int(value) > 0:
             return {"num_people": value}
         else:
-            dispatcher.utter_message(template="utter_wrong_num_people")
-            # validation failed, set slot to None
+            # dispatcher.utter_message(template="utter_wrong_num_people")
+            utter_wrong_num_people(dispatcher)
             return {"num_people": None}
 
     def validate_outdoor_seating(
@@ -149,55 +149,54 @@ class RestaurantForm(FormAction):
         dispatcher.utter_message(template="utter_submit")
         return []
 
+# class ActionDefaultAskAffirmation(Action):
+#     """Asks for an affirmation of the intent if NLU threshold is not met."""
+#
+#     def name(self):
+#         return "action_default_ask_affirmation"
+#
+#     def __init__(self):
+#         self.intent_mappings = {}
+#         # read the mapping from a csv and store it in a dictionary
+#         # with open('intent_mapping.csv', newline='', encoding='utf-8') as file:
+#         #     csv_reader = csv.reader(file)
+#         #     for row in csv_reader:
+#         #         self.intent_mappings[row[0]] = row[1]
+#
+#     def run(self, dispatcher, tracker, domain):
+#         # get the most likely intent
+#         last_intent_name = tracker.latest_message['intent']['name']
+#
+#         # get the prompt for the intent
+#         # intent_prompt = self.intent_mappings[last_intent_name]
+#         intent_prompt = last_intent_name
+#
+#         # Create the affirmation message and add two buttons to it.
+#         # Use '/<intent_name>' as payload to directly trigger '<intent_name>'
+#         # when the button is clicked.
+#         message = "Did you mean '{}'?".format(intent_prompt)
+#         buttons = [{'title': 'Yes',
+#                     'payload': '/{}'.format(last_intent_name)},
+#                    {'title': 'No',
+#                     'payload': '/out_of_scope'}]
+#         dispatcher.utter_message(message, buttons=buttons)
+#
+#         return []
 
-class ActionDefaultAskAffirmation(Action):
-    """Asks for an affirmation of the intent if NLU threshold is not met."""
 
-    def name(self):
-        return "action_default_ask_affirmation"
-
-    def __init__(self):
-        self.intent_mappings = {}
-        # read the mapping from a csv and store it in a dictionary
-        # with open('intent_mapping.csv', newline='', encoding='utf-8') as file:
-        #     csv_reader = csv.reader(file)
-        #     for row in csv_reader:
-        #         self.intent_mappings[row[0]] = row[1]
-
-    def run(self, dispatcher, tracker, domain):
-        # get the most likely intent
-        last_intent_name = tracker.latest_message['intent']['name']
-
-        # get the prompt for the intent
-        # intent_prompt = self.intent_mappings[last_intent_name]
-        intent_prompt = last_intent_name
-
-        # Create the affirmation message and add two buttons to it.
-        # Use '/<intent_name>' as payload to directly trigger '<intent_name>'
-        # when the button is clicked.
-        message = "Did you mean '{}'?".format(intent_prompt)
-        buttons = [{'title': 'Yes',
-                    'payload': '/{}'.format(last_intent_name)},
-                   {'title': 'No',
-                    'payload': '/out_of_scope'}]
-        dispatcher.utter_message(message, buttons=buttons)
-
-        return []
-
-
-class ActionDefaultFallback(Action):
-    """Executes the fallback action and goes back to the previous state
-    of the dialogue"""
-
-    def name(self) -> Text:
-        print("helooooooooo")
-        return "action_default_fallback"
-
-    # def __init__(self) -> None:
-    #     super().__init__("utter_default", silent_fail=True)
-
-    def run(self, dispatcher, tracker, domain):
-        # dispatcher.utter_message(template="utter_submit")
-        text = "we decided to fall back"
-        dispatcher.utter_message(text=text)
-        return []
+# class ActionDefaultFallback(Action):
+#     """Executes the fallback action and goes back to the previous state
+#     of the dialogue"""
+#
+#     def name(self) -> Text:
+#         print("helooooooooo")
+#         return "action_default_fallback"
+#
+#     # def __init__(self) -> None:
+#     #     super().__init__("utter_default", silent_fail=True)
+#
+#     def run(self, dispatcher, tracker, domain):
+#         # dispatcher.utter_message(template="utter_submit")
+#         text = "we decided to fall back"
+#         dispatcher.utter_message(text=text)
+#         return []

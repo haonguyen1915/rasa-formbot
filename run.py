@@ -13,8 +13,10 @@ from rasa.core.agent import Agent
 from rasa.utils.endpoints import ClientResponseError, EndpointConfig
 from haolib import *
 from rasa.core.policies.ensemble import PolicyEnsemble
-from haolib.lib_rasa.evaluation import EvaluateModel
+from haolib.lib_rasa import *
 from haolib.lib_cm.arg_parser import ArgParser
+from rasa.test import test_core
+
 logger = logging.getLogger(__name__)
 
 
@@ -84,7 +86,8 @@ async def conversation_loop(model_path: Text):
             break
         response = await agent.handle_text(val)
         if isinstance(response, list) and len(response) > 0:
-            print("Bot: {}".format(response[0]["text"]))
+            # print("Bot: {}".format(response[0]["text"]))
+            print("Bot: {}".format(response))
 
 
 def evaluation_model():
@@ -96,8 +99,16 @@ def evaluation_model():
 parser = ArgParser()
 parser.add_str("-m", "--mode", choices=["nlu", "core", "eval", "test"], default="test")
 args = parser.parse_args()
+
+
+def test_core_models():
+    test_core(model="/Users/hao/Projects/Ftech/Onboardings/rasa_blogs/rasa-formbot/models/20200417-183635.tar.gz",
+              stories="data/stories.md")
+
 if __name__ == "__main__":
-    logging.basicConfig(filename="log_stream.txt", level=logging.DEBUG)
+    # logging.basicConfig(filename="log_stream.txt", level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO,
+                        handlers=[logging.FileHandler("my_log.log", 'w', 'utf-8'), logging.StreamHandler()])
     loop = asyncio.get_event_loop()
     if args.mode == "nlu":
         train_nlu()
@@ -106,4 +117,5 @@ if __name__ == "__main__":
     if args.mode == "eval":
         evaluation_model()
     if args.mode == "test":
-        loop.run_until_complete(conversation_loop("models/current"))
+        # loop.run_until_complete(conversation_loop("models/current"))
+        test_core_models()
